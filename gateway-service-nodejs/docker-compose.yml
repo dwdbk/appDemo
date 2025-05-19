@@ -1,0 +1,257 @@
+version: '3.8'
+
+# Define the networks
+networks:
+  opera-network:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
+# Define the volumes
+volumes:
+  postgres_data:
+  keycloak_data:
+  prometheus_data:
+  grafana_data:
+  logs:
+
+# Main services
+services:
+  # Gateway Service
+  gateway-service:
+    build:
+      context: .
+      target: ${NODE_ENV:-development}
+      args:
+        NODE_ENV: ${NODE_ENV:-development}
+    container_name: gateway-service
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+      - "9229:9229"  # Node.js debug port
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=8080
+      - APP_URL=http://localhost:${APP_PORT:-8080}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-opera-realm}
+      - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID:-opera-gateway}
+      - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-your-client-secret}
+      - OPERA_SERVICE_URL=http://opera-service:8081
+      - SHOWS_SERVICE_URL=http://shows-service:8082
+      - GRAPHQL_SERVICE_URL=http://opera-service:8081/graphql
+      - ENABLE_METRICS=true
+      - METRICS_PORT=9090
+      - DEBUG=gateway:*,http-proxy-middleware
+      - NODE_OPTIONS=--inspect=0.0.0.0:9229
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+      - logs:/usr/src/app/logs
+    depends_on:
+      - keycloak
+      - opera-service
+      - shows-service
+    networks:
+      - opera-network
+      - monitoring
+    healthcheck:
+      test: ["CMD", "node", "./healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Keycloak Identity Provider
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak
+      - KC_DB_USERNAME=${POSTGRES_USER:-keycloak}
+      - KC_DB_PASSWORD=${POSTGRES_PASSWORD:-keycloak}
+      - KC_HOSTNAME=localhost
+      - KC_HTTP_ENABLED=true
+      - KC_PROXY=edge
+      - KC_HTTP_PORT=8080
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    ports:
+      - "${KEYCLOAK_PORT:-8085}:8080"
+    depends_on:
+      - postgres
+    networks:
+      - opera-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/realms/master"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # PostgreSQL Database for Keycloak
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=${POSTGRES_USER:-keycloak}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-keycloak}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - opera-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-keycloak}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Opera Service
+  opera-service:
+    image: opera-service:latest
+    container_name: opera-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/opera
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-opera}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-opera}
+    depends_on:
+      - postgres
+    networks:
+      - opera-network
+
+  # Shows Service
+  shows-service:
+    image: shows-service:latest
+    container_name: shows-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/shows
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-shows}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-shows}
+    depends_on:
+      - postgres
+    networks:
+      - opera-network
+
+  # Prometheus for Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - gateway-service
+    networks:
+      - monitoring
+
+  # Grafana for Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - opera-network
+
+  # Log Management with ELK Stack
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - monitoring
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.10.0
+    container_name: logstash
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+      - logs:/var/log/app
+    environment:
+      - LS_JAVA_OPTS=-Xmx256m -Xms256m
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring
+
+  # Portainer for Container Management
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - monitoring

@@ -1,0 +1,214 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet id="1" author="opera-service">
+        <comment>Create initial database schema for opera-service</comment>
+        
+        <!-- Create opera table -->
+        <createTable tableName="opera">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="premiere_year" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="composer" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="librettist" type="VARCHAR(255)"/>
+            <column name="language" type="VARCHAR(50)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create act table -->
+        <createTable tableName="act">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="sequence_number" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="opera_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_act_opera" referencedTableName="opera" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create scene table -->
+        <createTable tableName="scene">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="sequence_number" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="act_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_scene_act" referencedTableName="act" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create character table -->
+        <createTable tableName="character">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="voice_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="opera_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_character_opera" referencedTableName="opera" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create music table -->
+        <createTable tableName="music">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="lyrics" type="TEXT"/>
+            <column name="composer" type="VARCHAR(255)"/>
+            <column name="scene_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_music_scene" referencedTableName="scene" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create decor table -->
+        <createTable tableName="decor">
+            <column name="id" type="UUID" defaultValueComputed="uuid_generate_v4()">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="opera_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_decor_opera" referencedTableName="opera" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Create junction tables for many-to-many relationships -->
+        
+        <!-- Scene_Character -->
+        <createTable tableName="scene_character">
+            <column name="scene_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_scene_character_scene" referencedTableName="scene" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_scene_character_character" referencedTableName="character" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Scene_Decor -->
+        <createTable tableName="scene_decor">
+            <column name="scene_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_scene_decor_scene" referencedTableName="scene" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="decor_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_scene_decor_decor" referencedTableName="decor" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Music_Character -->
+        <createTable tableName="music_character">
+            <column name="music_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_music_character_music" referencedTableName="music" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="character_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_music_character_character" referencedTableName="character" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+        </createTable>
+        
+        <!-- Create indexes for better query performance -->
+        <createIndex tableName="opera" indexName="idx_opera_title">
+            <column name="title"/>
+        </createIndex>
+        
+        <createIndex tableName="opera" indexName="idx_opera_composer">
+            <column name="composer"/>
+        </createIndex>
+        
+        <createIndex tableName="act" indexName="idx_act_opera_id">
+            <column name="opera_id"/>
+        </createIndex>
+        
+        <createIndex tableName="scene" indexName="idx_scene_act_id">
+            <column name="act_id"/>
+        </createIndex>
+        
+        <createIndex tableName="character" indexName="idx_character_opera_id">
+            <column name="opera_id"/>
+        </createIndex>
+        
+        <createIndex tableName="music" indexName="idx_music_scene_id">
+            <column name="scene_id"/>
+        </createIndex>
+        
+        <createIndex tableName="decor" indexName="idx_decor_opera_id">
+            <column name="opera_id"/>
+        </createIndex>
+        
+        <!-- Enable UUID extension for PostgreSQL -->
+        <sql dbms="postgresql">
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        </sql>
+        
+    </changeSet>
+</databaseChangeLog>

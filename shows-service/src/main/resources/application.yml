@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: shows-service
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/opera_shows_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate  # We're using Liquibase for schema management
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+  # Liquibase Configuration
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+    enabled: true
+    default-schema: public
+    user: postgres
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/shows_db
+    driver-class-name: org.postgresql.Driver
+    change-log-parameters:
+      app.schema: public
+
+# Server Configuration
+server:
+  port: 8082
+  servlet:
+    context-path: /api
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.web: INFO
+    com.opera.shows: DEBUG
+    liquibase: INFO
+
+# Opera Service URL for GraphQL Federation
+opera:
+  service:
+    url: http://localhost:8081
+
+# DGS GraphQL Configuration
+dgs:
+  graphql:
+    graphiql:
+      enabled: true
+    schema-json:
+      enabled: true
+    subscriptions:
+      websocket:
+        path: /subscriptions
+  webflux:
+    enabled: false  # Disable WebFlux for now, we're using MVC
+
+# GraphQL Federation
+federation:
+  enabled: true
+  service:
+    name: shows-service
+    version: 1.0.0
+    url: http://localhost:8082/graphql
+
+# API Documentation
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+  health:
+    db:
+      enabled: true
+  metrics:
+    distribution:
+      percentiles:
+        http.server.requests: 0.5,0.75,0.95,0.99
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true

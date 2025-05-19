@@ -1,0 +1,201 @@
+scalar UUID
+scalar DateTime
+scalar Year
+
+type Query {
+    # Opera Queries
+    operas: [Opera!]!
+    opera(id: UUID!): Opera
+    operasByTitle(title: String!): [Opera!]!
+    operasByComposer(composer: String!): [Opera!]!
+    operasByYearRange(startYear: Int!, endYear: Int!): [Opera!]!
+    
+    # Act Queries
+    actsByOpera(operaId: UUID!): [Act!]!
+    act(id: UUID!): Act
+    
+    # Scene Queries
+    scenesByAct(actId: UUID!): [Scene!]!
+    scene(id: UUID!): Scene
+    
+    # Music Queries
+    musicByScene(sceneId: UUID!): [Music!]!
+    music(id: UUID!): Music
+    
+    # Character Queries
+    charactersByOpera(operaId: UUID!): [Character!]!
+    character(id: UUID!): Character
+    
+    # Decor Queries
+    decorsByOpera(operaId: UUID!): [Decor!]!
+    decor(id: UUID!): Decor
+}
+
+type Mutation {
+    # Opera Mutations
+    createOpera(input: OperaInput!): Opera!
+    updateOpera(id: UUID!, input: OperaInput!): Opera!
+    deleteOpera(id: UUID!): Boolean!
+    
+    # Act Mutations
+    createAct(input: ActInput!): Act!
+    updateAct(id: UUID!, input: ActInput!): Act!
+    deleteAct(id: UUID!): Boolean!
+    
+    # Scene Mutations
+    createScene(input: SceneInput!): Scene!
+    updateScene(id: UUID!, input: SceneInput!): Scene!
+    deleteScene(id: UUID!): Boolean!
+    
+    # Music Mutations
+    createMusic(input: MusicInput!): Music!
+    updateMusic(id: UUID!, input: MusicInput!): Music!
+    deleteMusic(id: UUID!): Boolean!
+    
+    # Character Mutations
+    createCharacter(input: CharacterInput!): Character!
+    updateCharacter(id: UUID!, input: CharacterInput!): Character!
+    deleteCharacter(id: UUID!): Boolean!
+    
+    # Decor Mutations
+    createDecor(input: DecorInput!): Decor!
+    updateDecor(id: UUID!, input: DecorInput!): Decor!
+    deleteDecor(id: UUID!): Boolean!
+}
+
+type Opera @key(fields: "id") {
+    id: UUID!
+    title: String!
+    description: String!
+    premiereYear: Year!
+    composer: String
+    librettist: String
+    language: String
+    acts: [Act!]!
+    characters: [Character!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Act @key(fields: "id") {
+    id: UUID!
+    title: String!
+    description: String
+    actNumber: Int!
+    opera: Opera!
+    scenes: [Scene!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Scene @key(fields: "id") {
+    id: UUID!
+    title: String!
+    description: String
+    sceneNumber: Int!
+    act: Act!
+    musicalPieces: [Music!]!
+    characters: [Character!]!
+    decors: [Decor!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Music @key(fields: "id") {
+    id: UUID!
+    title: String!
+    lyrics: String!
+    composer: String
+    keySignature: String
+    timeSignature: String
+    tempoBpm: Int
+    scene: Scene!
+    characters: [Character!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Character @key(fields: "id") {
+    id: UUID!
+    name: String!
+    description: String
+    voiceType: VoiceType
+    opera: Opera!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+type Decor @key(fields: "id") {
+    id: UUID!
+    name: String!
+    description: String
+    imageUrl: String
+    opera: Opera!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+}
+
+enum VoiceType {
+    SOPRANO
+    MEZZO_SOPRANO
+    CONTRALTO
+    COUNTERTENOR
+    TENOR
+    BARITONE
+    BASS
+    DRAMATIC_SOPRANO
+    COLORATURA_SOPRANO
+    HELDENTENOR
+    BASS_BARITONE
+}
+
+# Input Types
+input OperaInput {
+    title: String!
+    description: String!
+    premiereYear: Int!
+    composer: String
+    librettist: String
+    language: String
+}
+
+input ActInput {
+    title: String!
+    description: String
+    actNumber: Int!
+    operaId: UUID!
+}
+
+input SceneInput {
+    title: String!
+    description: String
+    sceneNumber: Int!
+    actId: UUID!
+    characterIds: [UUID!]
+    decorIds: [UUID!]
+}
+
+input MusicInput {
+    title: String!
+    lyrics: String!
+    composer: String
+    keySignature: String
+    timeSignature: String
+    tempoBpm: Int
+    sceneId: UUID!
+    characterIds: [UUID!]
+}
+
+input CharacterInput {
+    name: String!
+    description: String
+    voiceType: VoiceType
+    operaId: UUID!
+}
+
+input DecorInput {
+    name: String!
+    description: String
+    imageUrl: String
+    operaId: UUID!
+}

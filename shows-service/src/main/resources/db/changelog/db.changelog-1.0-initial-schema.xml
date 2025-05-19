@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/schema/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/schema/dbchangelog
+         http://www.liquibase.org/schema/dbchangelog/dbchangelog-4.2.xsd">
+
+    <!-- Create sequence for ID generation -->
+    <changeSet id="1" author="opera">
+        <createSequence 
+            sequenceName="hibernate_sequence"
+            startValue="1"
+            incrementBy="1"
+            ordered="true"/>
+    </changeSet>
+
+    <!-- Create shows table -->
+    <changeSet id="2" author="opera">
+        <createTable tableName="shows">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="opera_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="venue" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text"/>
+            <column name="image_url" type="varchar(512)"/>
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addUniqueConstraint 
+            tableName="shows" 
+            columnNames="opera_id, start_time, venue"
+            constraintName="uk_show_operatime_venue"/>
+            
+        <createIndex tableName="shows" indexName="idx_show_opera_id">
+            <column name="opera_id"/>
+        </createIndex>
+        
+        <createIndex tableName="shows" indexName="idx_show_start_time">
+            <column name="start_time"/>
+        </createIndex>
+        
+        <createIndex tableName="shows" indexName="idx_show_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Create singers table -->
+    <changeSet id="3" author="opera">
+        <createTable tableName="singers">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_of_birth" type="date"/>
+            <column name="nationality" type="varchar(100)"/>
+            <column name="bio" type="text"/>
+            <column name="image_url" type="varchar(512)"/>
+            <column name="voice_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addUniqueConstraint 
+            tableName="singers" 
+            columnNames="first_name, last_name, date_of_birth"
+            constraintName="uk_singer_name_dob"/>
+            
+        <createIndex tableName="singers" indexName="idx_singer_last_name">
+            <column name="last_name"/>
+        </createIndex>
+        
+        <createIndex tableName="singers" indexName="idx_singer_voice_type">
+            <column name="voice_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- Create show_singers join table -->
+    <changeSet id="4" author="opera">
+        <createTable tableName="show_singers">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="show_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_show_singer_show" 
+                    referencedTableName="shows" referencedColumnNames="id" deleteCascade="true"/>
+            </column>
+            <column name="singer_id" type="uuid">
+                <constraints nullable="false" foreignKeyName="fk_show_singer_singer" 
+                    referencedTableName="singers" referencedColumnNames="id"/>
+            </column>
+            <column name="character_name" type="varchar(255)"/>
+            <column name="role" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addUniqueConstraint 
+            tableName="show_singers" 
+            columnNames="show_id, singer_id, character_name"
+            constraintName="uk_show_singer_character"/>
+            
+        <createIndex tableName="show_singers" indexName="idx_show_singer_show_id">
+            <column name="show_id"/>
+        </createIndex>
+        
+        <createIndex tableName="show_singers" indexName="idx_show_singer_singer_id">
+            <column name="singer_id"/>
+        </createIndex>
+        
+        <createIndex tableName="show_singers" indexName="idx_show_singer_character">
+            <column name="character_name"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

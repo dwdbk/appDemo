@@ -1,0 +1,134 @@
+# GraphQL schema for the Shows Service
+
+type Query {
+    # Show Queries
+    shows: [Show!]!
+    show(id: ID!): Show
+    showsByOperaId(operaId: ID!): [Show!]!
+    upcomingShows(now: String!): [Show!]!
+    showsByVenueAndDateRange(venue: String!, start: String!, end: String!): [Show!]!
+    
+    # Singer Queries
+    singers: [Singer!]!
+    singer(id: ID!): Singer
+    singersByOperaId(operaId: ID!): [Singer!]!
+    singersByVoiceType(voiceType: VoiceType!): [Singer!]!
+}
+
+type Mutation {
+    # Show Mutations
+    createShow(showInput: ShowInput!): Show!
+    updateShow(id: ID!, showInput: ShowInput!): Show
+    deleteShow(id: ID!): Boolean
+    
+    # Singer Mutations
+    createSinger(singerInput: SingerInput!): Singer!
+    updateSinger(id: ID!, singerInput: SingerInput!): Singer
+    deleteSinger(id: ID!): Boolean
+    
+    # Cast Management
+    addCastMember(showId: ID!, singerId: ID!, characterName: String, role: String!): Show
+    updateCastMember(showSingerId: ID!, characterName: String, role: String): Show
+    removeCastMember(showId: ID!, singerId: ID!): Show
+}
+
+# Types
+type Show {
+    id: ID!
+    opera: Opera!
+    startTime: String!
+    endTime: String!
+    venue: String!
+    description: String
+    imageUrl: String
+    status: ShowStatus!
+    cast: [ShowSinger!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Singer {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    dateOfBirth: String
+    nationality: String
+    bio: String
+    imageUrl: String
+    voiceType: VoiceType!
+    showAppearances: [ShowSinger!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type ShowSinger {
+    id: ID!
+    show: Show!
+    singer: Singer!
+    characterName: String
+    role: String!
+}
+
+# Input Types
+input ShowInput {
+    operaId: ID!
+    startTime: String!
+    endTime: String!
+    venue: String!
+    description: String
+    imageUrl: String
+    status: ShowStatus = SCHEDULED
+}
+
+input SingerInput {
+    firstName: String!
+    lastName: String!
+    dateOfBirth: String
+    nationality: String
+    bio: String
+    imageUrl: String
+    voiceType: VoiceType!
+}
+
+# Enums
+enum ShowStatus {
+    SCHEDULED
+    CANCELLED
+    COMPLETED
+    POSTPONED
+}
+
+enum VoiceType {
+    SOPRANO
+    MEZZO_SOPRANO
+    CONTRALTO
+    COUNTER_TENOR
+    TENOR
+    BARITONE
+    BASS
+}
+
+# Federated Types
+type Opera @key(fields: "id") @extends {
+    id: ID! @external
+    shows: [Show!]! @requires(fields: "id")
+}
+
+type Query @extends {
+    _entities(representations: [_Any!]!): [_Entity]!
+    _service: _Service!
+}
+
+scalar _Any
+
+union _Entity = Opera
+
+# The sdl returned by the _service field on the Query type
+# represents the "federated service capabilities" which includes
+# the list of types a federated service can resolve
+# https://www.apollographql.com/docs/federation/federation-spec/#schema-modifications-glossary
+# https://www.apollographql.com/docs/federation/federation-spec/#schema-modifications-glossary
+# https://www.apollographql.com/docs/federation/federation-spec/#schema-modifications-glossary
+type _Service {
+    sdl: String
+}

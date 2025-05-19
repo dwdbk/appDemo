@@ -1,0 +1,231 @@
+# GraphQL schema for Opera Service
+
+type Query {
+    # Opera Queries
+    operas: [Opera!]!
+    opera(id: ID!): Opera
+    operasByComposer(composer: String!): [Opera!]!
+    operasByYearRange(startYear: Int!, endYear: Int!): [Opera!]!
+    
+    # Act Queries
+    act(id: ID!): Act
+    actsByOpera(operaId: ID!): [Act!]!
+    
+    # Scene Queries
+    scene(id: ID!): Scene
+    scenesByAct(actId: ID!): [Scene!]!
+    
+    # Character Queries
+    character(id: ID!): Character
+    charactersByOpera(operaId: ID!): [Character!]!
+    
+    # Music Queries
+    music(id: ID!): Music
+    musicByScene(sceneId: ID!): [Music!]!
+    
+    # Decor Queries
+    decor(id: ID!): Decor
+    decorsByOpera(operaId: ID!): [Decor!]!
+}
+
+type Mutation {
+    # Opera Mutations
+    createOpera(operaInput: OperaInput!): Opera!
+    updateOpera(id: ID!, operaInput: OperaInput!): Opera
+    deleteOpera(id: ID!): Boolean
+    
+    # Act Mutations
+    createAct(actInput: ActInput!): Act!
+    updateAct(id: ID!, actInput: ActInput!): Act
+    deleteAct(id: ID!): Boolean
+    
+    # Scene Mutations
+    createScene(sceneInput: SceneInput!): Scene!
+    updateScene(id: ID!, sceneInput: SceneInput!): Scene
+    deleteScene(id: ID!): Boolean
+    
+    # Character Mutations
+    createCharacter(characterInput: CharacterInput!): Character!
+    updateCharacter(id: ID!, characterInput: CharacterInput!): Character
+    deleteCharacter(id: ID!): Boolean
+    
+    # Music Mutations
+    createMusic(musicInput: MusicInput!): Music!
+    updateMusic(id: ID!, musicInput: MusicInput!): Music
+    deleteMusic(id: ID!): Boolean
+    
+    # Decor Mutations
+    createDecor(decorInput: DecorInput!): Decor!
+    updateDecor(id: ID!, decorInput: DecorInput!): Decor
+    deleteDecor(id: ID!): Boolean
+}
+
+# Types
+type Opera @key(fields: "id") {
+    id: ID!
+    title: String!
+    description: String
+    premiereYear: Int!
+    composer: String!
+    librettist: String
+    language: String
+    acts: [Act!]!
+    characters: [Character!]!
+    decors: [Decor!]!
+    shows: [Show!]! @external
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Act @key(fields: "id") {
+    id: ID!
+    title: String!
+    description: String
+    sequenceNumber: Int!
+    opera: Opera!
+    scenes: [Scene!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Scene @key(fields: "id") {
+    id: ID!
+    title: String!
+    description: String
+    sequenceNumber: Int!
+    act: Act!
+    music: [Music!]!
+    characters: [Character!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Character @key(fields: "id") {
+    id: ID!
+    name: String!
+    description: String
+    voiceType: VoiceType!
+    opera: Opera!
+    scenes: [Scene!]!
+    music: [Music!]!
+    showAppearances: [ShowSinger!]! @external
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Music @key(fields: "id") {
+    id: ID!
+    title: String!
+    description: String
+    lyrics: String
+    composer: String
+    scene: Scene!
+    characters: [Character!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+type Decor @key(fields: "id") {
+    id: ID!
+    name: String!
+    description: String
+    opera: Opera!
+    scenes: [Scene!]!
+    createdAt: String!
+    updatedAt: String!
+}
+
+# External types from shows-service
+type Show @extends @key(fields: "id") {
+    id: ID! @external
+    opera: Opera! @external
+}
+
+type ShowSinger @extends @key(fields: "id") {
+    id: ID! @external
+    characterName: String @external
+    role: String! @external
+    singer: Singer! @external
+}
+
+type Singer @extends @key(fields: "id") {
+    id: ID! @external
+    firstName: String! @external
+    lastName: String! @external
+}
+
+# Input Types
+input OperaInput {
+    title: String!
+    description: String
+    premiereYear: Int!
+    composer: String!
+    librettist: String
+    language: String
+}
+
+input ActInput {
+    title: String!
+    description: String
+    sequenceNumber: Int!
+    operaId: ID!
+}
+
+input SceneInput {
+    title: String!
+    description: String
+    sequenceNumber: Int!
+    actId: ID!
+    characterIds: [ID!]
+    decorIds: [ID!]
+}
+
+input CharacterInput {
+    name: String!
+    description: String
+    voiceType: VoiceType!
+    operaId: ID!
+    sceneIds: [ID!]
+    musicIds: [ID!]
+}
+
+input MusicInput {
+    title: String!
+    description: String
+    lyrics: String
+    composer: String
+    sceneId: ID!
+    characterIds: [ID!]
+}
+
+input DecorInput {
+    name: String!
+    description: String
+    operaId: ID!
+    sceneIds: [ID!]
+}
+
+# Enums
+enum VoiceType {
+    SOPRANO
+    MEZZO_SOPRANO
+    CONTRALTO
+    COUNTER_TENOR
+    TENOR
+    BARITONE
+    BASS
+}
+
+# Federation types
+type Query @extends {
+    _entities(representations: [_Any!]!): [_Entity]!
+    _service: _Service!
+}
+
+scalar _Any
+
+union _Entity = Opera | Act | Scene | Character | Music | Decor | Show | ShowSinger | Singer
+
+type _Service {
+    sdl: String
+}

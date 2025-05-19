@@ -1,0 +1,125 @@
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+      routes:
+        - id: opera-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/opera/**
+          filters:
+            - RewritePath=/opera/(?<segment>.*), /api/$\{segment}
+        - id: shows-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/shows/**
+          filters:
+            - RewritePath=/shows/(?<segment>.*), /api/$\{segment}
+        - id: graphql-playground
+          uri: http://localhost:8080/playground.html
+          predicates:
+            - Path=/playground
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework: INFO
+    com.opera.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    org.springframework.http.server.reactive: DEBUG
+
+# Keycloak OAuth2 Configuration
+keycloak:
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8085/auth}
+  realm: ${KEYCLOAK_REALM:opera-realm}
+  resource: ${KEYCLOAK_CLIENT_ID:opera-gateway}
+  credentials:
+    secret: ${KEYCLOAK_CLIENT_SECRET:your-client-secret}
+  use-resource-role-mappings: true
+  principal-attribute: preferred_username
+  cors: true
+
+# OAuth2 Client Configuration
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID:opera-gateway}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:your-client-secret}
+            authorization-grant-type: authorization_code
+            scope: openid,profile,email,roles
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:${keycloak.auth-server-url}/realms/${keycloak.realm}}
+            user-name-attribute: preferred_username
+            jwk-set-uri: ${keycloak.auth-server-url}/realms/${keycloak.realm}/protocol/openid-connect/certs
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.issuer-uri}
+          jwk-set-uri: ${keycloak.jwk-set-uri}
+          audience: account
+
+# Apollo Federation Configuration
+federation:
+  enabled: true
+  services:
+    opera-service:
+      url: http://localhost:8081/graphql
+    shows-service:
+      url: http://localhost:8082/graphql
+
+# GraphQL Configuration
+graphql:
+  graphiql:
+    enabled: true
+    endpoint: /graphql
+    subscriptions:
+      endpoint: /subscriptions
+    static:
+      basePath: /playground
+  playground:
+    enabled: true
+    endpoint: /playground
+    subscription:
+      endpoint: /subscriptions
+
+# Management Endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+  metrics:
+    enable:
+      http:
+        server:
+          requests: true
+    distribution:
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+      percentiles-histogram:
+        http.server.requests: true
+    tags:
+      application: ${spring.application.name}
