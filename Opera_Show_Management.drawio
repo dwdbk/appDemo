@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Opera and Show Management System" id="1">
+    <mxGraphModel dx="1684" dy="884" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="2" value="Opera&#xa;+title : String&#xa;+author : String&#xa;+creationDate : Date&#xa;+duration : Integer&#xa;+description : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="60" y="20" width="180" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="3" value="Act&#xa;description : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="20" y="160" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="4" value="Scene" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="280" y="20" width="120" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="5" value="Character&#xa;name : String&#xa;isMain : Boolean" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="420" y="20" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="6" value="Show&#xa;date : Date&#xa;location : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="420" y="100" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="7" value="Decor&#xa;+title : String&#xa;+description : String&#xa;+lyrics : Text&#xa;+score : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="600" y="20" width="180" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="8" value="Music&#xa;+title : String&#xa;+description : String&#xa;+lyrics : Text&#xa;+score : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="600" y="130" width="180" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="9" value="Singer&#xa;name : String&#xa;range : String" style="shape=swimlane;" vertex="1" parent="1">
+          <mxGeometry x="600" y="250" width="140" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="10" style="endArrow=none;" edge="1" parent="1" source="2" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="11" style="endArrow=none;" edge="1" parent="1" source="4" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="12" style="endArrow=none;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="13" style="endArrow=none;" edge="1" parent="1" source="5" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="14" style="endArrow=none;" edge="1" parent="1" source="4" target="7">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="15" style="endArrow=none;" edge="1" parent="1" source="4" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="16" style="endArrow=none;" edge="1" parent="1" source="6" target="9">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" style="endArrow=none;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
